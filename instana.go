@@ -1,7 +1,6 @@
 package instana
 
 import (
-	"fmt"
 	"time"
 
 	"go.opencensus.io/trace"
@@ -58,7 +57,6 @@ func (b *Batch) Add(span *jsonSpan) {
 // that calls the handler whenever batchsize is met.
 func (b *Batch) run() {
 	for {
-		fmt.Println("here again after 3 seconds")
 		select {
 		case <-time.After(time.Second * 3):
 			// check to see if we have the buffer size of
