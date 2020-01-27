@@ -1,6 +1,11 @@
 package instana
 
 import (
+	"bytes"
+	"encoding/binary"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
 
 	"go.opencensus.io/trace"
@@ -9,13 +14,8 @@ import (
 // Exporter satisfies the opencensus interface i.e trace.Exporter which has a single method
 // i.e ExportSpan(span trace.SpanData)
 type Exporter struct {
-	// Buffer for json spans that will
-	// eventually be transmitted to instana agent
-	instanaJSONSpans []*jsonSpan
-	// Agent host
-	agentHost string
-	// Agent port
-	agentPort int
+	// Service name
+	serviceName string
 	// Prefix
 	prefix string
 	// batch wraps around the slice buffer and
@@ -29,23 +29,42 @@ type Dispatcher interface {
 	Dispatch([]*jsonSpan) error
 }
 
-// DispatcherFunc is function type that implements Dispatcher interface.
-type DispatcherFunc func([]*jsonSpan) error
-
-// Dispatch is a method on DispatcherFunc that implemetsn Dispatcher interface.
-func (df DispatcherFunc) Dispatch(jsonSpans []*jsonSpan) error {
-	return df(jsonSpans)
+// TraceDispatcher implements
+type TraceDispatcher struct {
+	agentHost string
+	agentPort int
 }
 
-var defaultDispatcher = DispatcherFunc(func(jsonSpans []*jsonSpan) error {
-	return nil
-})
+// Dispatch transmits the slice of jsonSpan to instana agent
+func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 
+	path := "/com.instana.plugin.generic.trace"
+
+	url := fmt.Sprintf("%s/%s:%d", td.agentHost, path, td.agentPort)
+	data, err := json.Marshal(jsonSpans)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	_, err = http.DefaultClient.Do(req)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Batch wraps around the buffer of slice of json spans and provides buffered approach
+// for transmitting spans to instana agent
 type Batch struct {
 	instanaJSONSpans []*jsonSpan
 	// TODO : add buffferbyte limit size for each individual instana json span
-	limit      int
-	dispatcher Dispatcher
+	limit       int
+	dispatcher  Dispatcher
+	servicename string
 }
 
 // Add appends span to buffer.
@@ -73,6 +92,7 @@ func (b *Batch) run() {
 	}
 }
 
+// Compile time checks to satisfy trace.Exporter interface
 var _ trace.Exporter = (*Exporter)(nil)
 
 // ExportSpan implements the trace.Exporter interface defined
@@ -80,30 +100,59 @@ var _ trace.Exporter = (*Exporter)(nil)
 // This function converts opencensus span data to span specification
 // of instana and appends it to instana JSON spans buffer
 func (e *Exporter) ExportSpan(data *trace.SpanData) {
-	instanaSpan := ToInstanaSpan(data)
+	instanaSpan := e.ToInstanaSpan(data)
 
 	e.batch.Add(instanaSpan)
 }
 
 // ToInstanaSpan converts opencensus span data to span data around instana specification.
-func ToInstanaSpan(data *trace.SpanData) *jsonSpan {
+func (e *Exporter) ToInstanaSpan(data *trace.SpanData) *jsonSpan {
+	jData := &jsonData{}
+	jData.SDK = &jsonSDKData{
+		Name: data.Name,
+		Custom: &jsonCustomData{
+			Tags: data.Attributes,
+		},
+	}
+	jData.Service = e.serviceName
 
-	return nil
+	jS := &jsonSpan{
+		TraceID:   bytesToInt64(data.TraceID[0:8]),
+		Data:      jData,
+		SpanID:    bytesToInt64(data.SpanID[:]),
+		Duration:  uint64(data.EndTime.Sub(data.StartTime).Nanoseconds()) / uint64(time.Millisecond),
+		Kind:      data.SpanKind,
+		Timestamp: uint64(data.StartTime.UnixNano()) / uint64(time.Millisecond),
+		ParentID:  bytesToInt64(data.ParentSpanID[:]),
+		Name:      "sdk",
+		Error:     data.Status.Code != 0,
+		Lang:      "go",
+	}
+
+	return jS
 }
 
 // NewExporter ...
-func NewExporter(host string, port int) *Exporter {
+func NewExporter(servicename, host string, port int) *Exporter {
 	// Create batch struct
 	batch := &Batch{
-		limit:      1,
-		dispatcher: defaultDispatcher,
+		limit: 1,
+		dispatcher: &TraceDispatcher{
+			agentHost: host,
+			agentPort: port,
+		},
 	}
 
 	go batch.run()
 
 	return &Exporter{
-		agentHost: host,
-		agentPort: port,
-		batch:     batch,
+
+		batch:       batch,
+		serviceName: servicename,
 	}
+}
+
+func bytesToInt64(buf []byte) int64 {
+	u := binary.BigEndian.Uint64(buf)
+	return int64(u)
 }

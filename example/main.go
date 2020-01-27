@@ -1,9 +1,14 @@
 package main
 
-import instana "github.com/robusgauli/opencensus-exporter-instana"
+import (
+	"fmt"
+
+	instana "github.com/robusgauli/opencensus-exporter-instana"
+)
 
 func main() {
-	instana.NewExporter("localhost", 4000)
+	exporter := instana.NewExporter("name", "localhost", 3000)
+	fmt.Println(exporter)
 	for {
 
 	}
