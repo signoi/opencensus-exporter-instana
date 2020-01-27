@@ -1,4 +1,4 @@
-module github.com/robusgauli/opencensus-exporter-instana
+module github.com/signoi/opencensus-exporter-instana
 
 go 1.13
 
