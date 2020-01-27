@@ -86,9 +86,13 @@ func (b *Batch) run() {
 				// call the handler function
 				// passing in the chunk
 				err := b.dispatcher.Dispatch(b.instanaJSONSpans)
+				if err != nil {
+					log.Println("Failed to sent to instana agent")
+				}
 				if err == nil {
 					// clear the buffer
 					b.instanaJSONSpans = b.instanaJSONSpans[:0]
+					log.Println("Log sent to instana agent")
 				}
 			}
 		}
