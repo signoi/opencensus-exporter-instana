@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -50,10 +51,12 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 	if err != nil {
 		return err
 	}
-	_, err = http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+	log.Println("Response from agent ", res)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
