@@ -54,11 +54,12 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 		return err
 	}
 	res, err := http.DefaultClient.Do(req)
-	b, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return err
 	}
+
 	defer res.Body.Close()
+	b, err := ioutil.ReadAll(res.Body)
 	fmt.Println("Response", string(b))
 
 	if err != nil {
