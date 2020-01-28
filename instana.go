@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
@@ -52,7 +53,13 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 	if err != nil {
 		return err
 	}
-	_, err = http.DefaultClient.Do(req)
+	res, err := http.DefaultClient.Do(req)
+	b, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	fmt.Println("Response", string(b))
 
 	if err != nil {
 		return err
