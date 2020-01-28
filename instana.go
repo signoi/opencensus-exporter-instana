@@ -126,6 +126,7 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 func (e *Exporter) ToInstanaSpan(data *trace.SpanData) *jsonSpan {
 	// Drive ...
 	fmt.Println("data", data.SpanID)
+	fmt.Println("data name,", data.Name)
 	jData := &jsonData{}
 	jData.SDK = &jsonSDKData{
 		Name: data.Name,
