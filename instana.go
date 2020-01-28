@@ -51,7 +51,7 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 	if err != nil {
 		return err
 	}
-	_, err := http.DefaultClient.Do(req)
+	_, err = http.DefaultClient.Do(req)
 
 	if err != nil {
 		return err
