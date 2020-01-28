@@ -122,6 +122,8 @@ func (e *Exporter) ExportSpan(data *trace.SpanData) {
 
 // ToInstanaSpan converts opencensus span data to span data around instana specification.
 func (e *Exporter) ToInstanaSpan(data *trace.SpanData) *jsonSpan {
+	// Drive ...
+	fmt.Println("data", data.SpanID)
 	jData := &jsonData{}
 	jData.SDK = &jsonSDKData{
 		Name: data.Name,
