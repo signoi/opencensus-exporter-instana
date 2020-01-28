@@ -136,13 +136,13 @@ func (e *Exporter) ToInstanaSpan(data *trace.SpanData) *jsonSpan {
 	jData.Service = e.serviceName
 
 	jS := &jsonSpan{
-		TraceID:   bytesToInt64(data.TraceID[0:8]),
+		TraceID:   string(data.TraceID[0:8]),
 		Data:      jData,
-		SpanID:    bytesToInt64(data.SpanID[:]),
+		SpanID:    string(data.SpanID[:]),
 		Duration:  uint64(data.EndTime.Sub(data.StartTime).Nanoseconds()) / uint64(time.Millisecond),
 		Kind:      data.SpanKind,
 		Timestamp: uint64(data.StartTime.UnixNano()) / uint64(time.Millisecond),
-		ParentID:  bytesToInt64(data.ParentSpanID[:]),
+		ParentID:  string(data.ParentSpanID[:]),
 		Name:      "sdk",
 		Error:     data.Status.Code != 0,
 		Lang:      "go",
