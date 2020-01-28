@@ -49,7 +49,7 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 		return err
 	}
 
-	fmt.Println("dumped data", data)
+	fmt.Println("dumped data", string(data))
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(data))
 	if err != nil {
 		return err
