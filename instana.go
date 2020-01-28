@@ -39,9 +39,9 @@ type TraceDispatcher struct {
 // Dispatch transmits the slice of jsonSpan to instana agent
 func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 
-	path := "/com.instana.plugin.generic.trace"
+	path := "com.instana.plugin.generic.trace"
 
-	url := fmt.Sprintf("%s/%s:%d", td.agentHost, path, td.agentPort)
+	url := fmt.Sprintf("http://%s:%d/%s", td.agentHost, td.agentPort, path)
 	data, err := json.Marshal(jsonSpans)
 	if err != nil {
 		return err
@@ -51,8 +51,8 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 	if err != nil {
 		return err
 	}
-	res, err := http.DefaultClient.Do(req)
-	log.Println("Response from agent ", res)
+	_, err := http.DefaultClient.Do(req)
+
 	if err != nil {
 		return err
 	}
