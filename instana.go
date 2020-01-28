@@ -42,6 +42,7 @@ func (td *TraceDispatcher) Dispatch(jsonSpans []*jsonSpan) error {
 	path := "com.instana.plugin.generic.trace"
 
 	url := fmt.Sprintf("http://%s:%d/%s", td.agentHost, td.agentPort, path)
+	fmt.Println("URL ", url)
 	data, err := json.Marshal(jsonSpans)
 	if err != nil {
 		return err
@@ -141,6 +142,7 @@ func (e *Exporter) ToInstanaSpan(data *trace.SpanData) *jsonSpan {
 
 // NewExporter ...
 func NewExporter(servicename, host string, port int) *Exporter {
+
 	// Create batch struct
 	batch := &Batch{
 		limit: 1,
